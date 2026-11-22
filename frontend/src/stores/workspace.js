@@ -18,5 +18,12 @@ export const workspace = {
   deliveries: () => call('/deliveries'),
   schedule: data => call('/schedules', data),
   disable: id => call(`/schedules/${id}/disable`, {}),
+  circuitSets: () => call('/circuit/datasets'),
+  getCircuitSet: (id, offset = 0) => call(`/circuit/datasets/${id}?offset=${offset}`),
+  uploadCircuit: data => call('/circuit/datasets', data),
+  diagnoses: () => call('/diagnoses'),
+  startDiagnosis: data => call('/diagnoses', data),
+  getDiagnosis: id => call(`/diagnoses/${id}`),
+  verifyDiagnosis: (id, breakpoints) => call(`/diagnoses/${id}/verify`, {breakpoints}),
   download: (path, filename) => saveFile(path, session.token, filename),
 };

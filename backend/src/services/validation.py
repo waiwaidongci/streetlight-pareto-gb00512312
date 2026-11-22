@@ -2,7 +2,7 @@ import csv
 import io
 import math
 from datetime import date
-from src.domain import analysis
+from src.domain import analysis, circuit
 from src.domain.spec import SPEC
 
 
@@ -44,9 +44,8 @@ def cell(field, raw):
     return value
 
 
-def parse_rows(text):
+def _parse(text, fields, validate):
     reader = csv.DictReader(io.StringIO(text.removeprefix('\ufeff'), newline=''), strict=True)
-    fields = SPEC['fields']
     keys = {field['key'] for field in fields}
     required = {field['key'] for field in fields if field.get('required', True)}
     rows = []
@@ -67,13 +66,27 @@ def parse_rows(text):
         raise ValueError(f'CSV 第 {reader.line_num} 行附近格式不正确') from None
     if not rows:
         raise ValueError('CSV 至少需要一行有效数据')
-    if hasattr(analysis, 'validate_rows'):
-        analysis.validate_rows(rows)
+    validate(rows)
     return rows
 
 
-def normalize_params(params):
-    fields = SPEC['params']
+def parse_rows(text):
+    return _parse(text, SPEC['fields'], analysis.validate_rows)
+
+
+def parse_circuit_rows(text):
+    return _parse(text, circuit.CIRCUIT_FIELDS, circuit.validate_rows)
+
+
+def _normalize(params, fields):
     if set(params) - {field['key'] for field in fields}:
         raise ValueError('存在未知运行参数，请重新打开工作面板')
     return {field['key']: cell(field, params.get(field['key'], field['default'])) for field in fields}
+
+
+def normalize_params(params):
+    return _normalize(params, SPEC['params'])
+
+
+def normalize_circuit_params(params):
+    return _normalize(params, circuit.CIRCUIT_PARAMS)

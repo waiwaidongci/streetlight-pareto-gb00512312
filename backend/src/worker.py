@@ -1,6 +1,7 @@
 import logging
 import time
 from pathlib import Path
+from src.services import circuit_exec
 from src.services.execution import claim, execute, materialize_due
 from src.utils.wakeup import wait
 
@@ -17,9 +18,13 @@ def main():
             heartbeat.touch()
             if lease:
                 execute(lease)
-                heartbeat.touch()
             else:
-                wait()
+                diagnosis_lease = circuit_exec.claim()
+                if diagnosis_lease:
+                    circuit_exec.execute(diagnosis_lease, pulse=heartbeat.touch)
+                else:
+                    wait()
+            heartbeat.touch()
         except Exception:
             log.exception('Worker cycle failed')
             time.sleep(2)
